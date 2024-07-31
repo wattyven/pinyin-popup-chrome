@@ -1,10 +1,12 @@
 let pinyinDict = {};
+let isPinyinDictLoaded = false;
 
 // load our generated dict
 fetch(chrome.runtime.getURL('pinyinDict.json'))
   .then(response => response.json())
   .then(data => {
     pinyinDict = data;
+    isPinyinDictLoaded = true;
     console.log('Pinyin dictionary loaded');
   })
   .catch(error => console.error('Error loading pinyin dictionary:', error));
@@ -19,6 +21,11 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === "showPinyin") {
+    if (!isPinyinDictLoaded) {
+      console.error('Pinyin dictionary is not loaded yet.');
+      return;
+    }
+
     const selectedText = info.selectionText;
     const pinyinResult = convertToPinyin(selectedText);
     
@@ -31,6 +38,11 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 function convertToPinyin(text) {
+  if (!isPinyinDictLoaded) {
+    console.error('Pinyin dictionary is not loaded yet.');
+    return text;
+  }
+
   return text.split('').map(char => {
     if (pinyinDict[char]) {
       return pinyinDict[char][0]; // use first pinyin from list if multiple are available
